@@ -1,2 +1,2 @@
 # electivaV
-Este repositorio es para electiva V
+Este repositorio es para el proyecto de electiva V
