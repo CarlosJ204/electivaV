@@ -3,8 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth'; // signOut unificado aquí
 import { auth } from './src/services/firebaseConfig';
+import { TouchableOpacity, Alert } from 'react-native';
 
 // Vistas existentes
 import { CategoryScreen } from './src/views/CategoryScreen';
@@ -21,6 +22,15 @@ const Stack = createStackNavigator();
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Función para manejar el cierre de sesión
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error: any) {
+      Alert.alert('Error', 'Hubo un problema al cerrar la sesión.');
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -48,6 +58,12 @@ export default function App() {
             },
             tabBarActiveTintColor: theme.colors.primary,
             tabBarInactiveTintColor: theme.colors.textMuted,
+            // Botón de cierre de sesión global para las pestañas
+            headerRight: () => (
+              <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15, padding: 5 }}>
+                <Ionicons name="log-out-outline" size={26} color={theme.colors.textLight} />
+              </TouchableOpacity>
+            ),
           }}
         >
           <Tab.Screen
