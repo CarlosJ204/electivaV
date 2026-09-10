@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, ScrollView, StyleSheet, ActivityIndicator, Pressable, TouchableWithoutFeedback, Keyboard, Modal, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker'; // <-- 1. Importamos el Picker que instalaste
 import { useMovementController } from '../controllers/useMovementController';
 import { useCategoryController } from '../controllers/useCategoryController';
 import { theme } from '../theme/theme';
+
+// <-- 2. Creamos tus categorías predefinidas (RF05)
+const categoriasPredefinidas = [
+  { id: 'pre-1', name: 'Alimentación' },
+  { id: 'pre-2', name: 'Transporte' },
+  { id: 'pre-3', name: 'Vivienda' },
+  { id: 'pre-4', name: 'Servicios' },
+  { id: 'pre-5', name: 'Entretenimiento' },
+];
 
 export const MovementScreen = () => {
   const { movements, isLoading, error, handleAddMovement } = useMovementController();
@@ -14,8 +24,10 @@ export const MovementScreen = () => {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [categoryOpen, setCategoryOpen] = useState(false);
   const [description, setDescription] = useState('');
+
+  // <-- 3. Unimos tus categorías predefinidas con las que vienen de la base de datos (RF06)
+  const todasLasCategorias = [...categoriasPredefinidas, ...categories];
 
   const formattedDate = date.toISOString().split('T')[0];
 
@@ -52,88 +64,34 @@ export const MovementScreen = () => {
     setAmount('');
     setDescription('');
     setCategoryId(null);
-    setCategoryOpen(false);
     setDate(new Date());
   };
 
   const canSubmit = !isLoading && !!parseFloat(amount.replace(',', '.')) && !!categoryId;
 
+  // <-- 4. Simplificamos esta función para usar el Picker
   const renderCategorySelector = () => {
     if (isLoadingCategories) {
       return <ActivityIndicator size="small" color={theme.colors.primary} style={styles.categoryLoader} />;
     }
-    if (categories.length === 0) {
-      return <Text style={styles.noCategories}>No hay categorías. Crea una en la pestaña Categorías.</Text>;
-    }
-    if (categories.length <= 3) {
-      return (
-        <View style={styles.categoryList}>
-          {categories.map((cat) => {
-            const selected = categoryId === cat.id;
-            return (
-              <Pressable
-                key={cat.id ?? cat.name}
-                style={[styles.categoryChip, selected && styles.categoryChipActive]}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setCategoryId(cat.id ?? null);
-                }}
-              >
-                <Text style={[styles.categoryChipText, selected && styles.categoryChipTextActive]}>
-                  {cat.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      );
-    }
-    const selectedCategoryName = categories.find((c) => c.id === categoryId)?.name;
+    
     return (
-      <View style={styles.dropdown}>
-        <Pressable
-          style={styles.dropdownButton}
-          onPress={() => {
-            Keyboard.dismiss();
-            setCategoryOpen((prev) => !prev);
-          }}
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={categoryId || ''}
+          onValueChange={(itemValue) => setCategoryId(itemValue || null)}
+          style={styles.picker}
         >
-          <Text
-            style={[
-              styles.dropdownButtonText,
-              selectedCategoryName && styles.dropdownButtonTextSelected,
-            ]}
-          >
-            {selectedCategoryName ?? 'Seleccionar categoría'}
-          </Text>
-          <Text style={styles.dropdownChevron}>{categoryOpen ? '▲' : '▼'}</Text>
-        </Pressable>
-        {categoryOpen && (
-          <ScrollView
-            style={styles.dropdownList}
-            nestedScrollEnabled
-            keyboardShouldPersistTaps="handled"
-          >
-            {categories.map((cat, index) => {
-              const selected = categoryId === cat.id;
-              return (
-                <Pressable
-                  key={cat.id ?? index}
-                  style={[styles.categoryRow, selected && styles.categoryRowActive]}
-                  onPress={() => {
-                    setCategoryId(cat.id ?? null);
-                    setCategoryOpen(false);
-                  }}
-                >
-                  <Text style={[styles.categoryRowText, selected && styles.categoryRowTextActive]}>
-                    {cat.name}
-                  </Text>
-                  {selected ? <Text style={styles.categoryRowCheck}>✓</Text> : null}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        )}
+          <Picker.Item label="Selecciona una categoría..." value="" color={theme.colors.textMuted} />
+          {todasLasCategorias.map((cat) => (
+            <Picker.Item 
+              key={cat.id ?? cat.name} 
+              label={cat.name} 
+              value={cat.id} 
+              color={theme.colors.textDark}
+            />
+          ))}
+        </Picker>
       </View>
     );
   };
@@ -206,6 +164,7 @@ export const MovementScreen = () => {
           </Modal>
         )}
 
+        {/* Aquí se dibuja el menú desplegable que armamos arriba */}
         {renderCategorySelector()}
 
         <TextInput
@@ -238,7 +197,7 @@ export const MovementScreen = () => {
             <Text style={styles.cardDate}>{new Date(item.date).toISOString().split('T')[0]}</Text>
           </View>
           <Text style={styles.cardCategory}>
-            {categories.find((c) => c.id === item.categoryId)?.name ?? item.categoryId}
+            {todasLasCategorias.find((c) => c.id === item.categoryId)?.name ?? item.categoryId}
           </Text>
           {item.description ? <Text style={styles.cardDesc}>{item.description}</Text> : null}
         </View>
@@ -325,92 +284,18 @@ const styles = StyleSheet.create({
   categoryLoader: {
     marginBottom: theme.spacing.md,
   },
-  noCategories: {
-    color: theme.colors.textMuted,
-    marginBottom: theme.spacing.md,
-    fontSize: theme.fontSizes.md,
-  },
-  categoryList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  categoryChip: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.round,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
-  },
-  categoryChipActive: {
-    backgroundColor: theme.colors.primaryLight,
-    borderColor: theme.colors.primary,
-  },
-  categoryChipText: {
-    color: theme.colors.textDark,
-    fontSize: theme.fontSizes.sm,
-  },
-  categoryChipTextActive: {
-    color: theme.colors.textLight,
-    fontWeight: 'bold',
-  },
-  dropdown: {
-    marginBottom: theme.spacing.md,
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  // <-- 5. Estilos para el nuevo Picker (Reemplazan todo el código CSS que sobraba del diseño anterior)
+  pickerContainer: {
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.sm,
-    padding: theme.spacing.md,
     backgroundColor: theme.colors.background,
+    marginBottom: theme.spacing.md,
+    overflow: 'hidden', 
   },
-  dropdownButtonText: {
-    color: theme.colors.textMuted,
-    fontSize: theme.fontSizes.md,
-  },
-  dropdownButtonTextSelected: {
-    color: theme.colors.textDark,
-  },
-  dropdownChevron: {
-    color: theme.colors.textMuted,
-    fontSize: theme.fontSizes.sm,
-  },
-  dropdownList: {
-    maxHeight: 240,
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.sm,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.cardBackground,
-  },
-  categoryRowActive: {
-    backgroundColor: theme.colors.primaryLight,
-  },
-  categoryRowText: {
-    color: theme.colors.textDark,
-    fontSize: theme.fontSizes.md,
-  },
-  categoryRowTextActive: {
-    color: theme.colors.textLight,
-    fontWeight: 'bold',
-  },
-  categoryRowCheck: {
-    color: theme.colors.textLight,
-    fontSize: theme.fontSizes.md,
-    fontWeight: 'bold',
+  picker: {
+    height: 55,
+    width: '100%',
   },
   card: {
     backgroundColor: theme.colors.cardBackground,
