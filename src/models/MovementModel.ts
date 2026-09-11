@@ -1,6 +1,8 @@
 import { collection, addDoc, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../services/firebaseConfig';
 import { Movement } from '../types/Movement';
+import type { QueryConstraint } from 'firebase/firestore';
+import { MovementFilter } from '../types/MovementFilter';
 
 export class MovementModel {
   private collectionRef = collection(db, 'movements');
@@ -39,4 +41,62 @@ export class MovementModel {
       throw error;
     }
   }
+
+// Obtener el historial de movimientos aplicando filtros
+public async getMovementHistory(
+  filter: MovementFilter
+): Promise<Movement[]> {
+  try {
+    const constraints: QueryConstraint[] = [
+      where('userId', '==', filter.userId),
+    ];
+
+    if (filter.categoryId) {
+      constraints.push(
+        where('categoryId', '==', filter.categoryId)
+      );
+    }
+
+    constraints.push(
+      orderBy('date', filter.sortOrder)
+    );
+
+    const historyQuery = query(
+      this.collectionRef,
+      ...constraints
+    );
+
+    const querySnapshot = await getDocs(historyQuery);
+
+    const movements: Movement[] = [];
+
+    querySnapshot.forEach((doc) => {
+      movements.push({
+        id: doc.id,
+        ...doc.data(),
+      } as Movement);
+    });
+
+    return movements;
+
+  } catch (error) {
+    console.error(
+      'Error obteniendo el historial de movimientos: ',
+      error
+    );
+
+    throw error;
+  }
 }
+
+
+
+
+
+
+
+
+
+ ////////////////// 
+}
+
