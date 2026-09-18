@@ -11,7 +11,7 @@ const categorySchema = new mongoose.Schema({
         required: false,
         trim: true,
     },
-        userId: {
+    userId: {
         type: String,
         required: true,
     }
