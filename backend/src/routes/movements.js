@@ -27,6 +27,49 @@ router.post("/", async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Internal server error" });
     }
-})
+});
+
+//endpoint para obtener los movimientos del ultimo al primero
+router.get("/get-movements-desc/:userId", async (req, res) => {
+    try {
+        //hay que cambiarlo cuando se implemente el login, porque el id no se puede pedir manualmente
+        const { userId } = req.params
+
+        const movementsHistorial = await Movement.find({
+            userId: userId,
+        }).sort({ createdAt: -1 });
+        res.status(200).json(movementsHistorial);
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+
+});
+
+//endpoint para obtener los movimientos del primero al ultimo
+router.get("/get-movements-asc/:userId", async (req, res) => {
+    try {
+        //hay que cambiarlo cuando se implemente el login, porque el id no se puede pedir manualmente
+        const { userId } = req.params
+
+        const movementsHistorial = await Movement.find({
+            userId: userId,
+        }).sort({ createdAt: 1 });
+        res.status(200).json(movementsHistorial);
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+
+});
+
 
 export default router;

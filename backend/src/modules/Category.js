@@ -10,6 +10,10 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: false,
         trim: true,
+    },
+        userId: {
+        type: String,
+        required: true,
     }
 });
 

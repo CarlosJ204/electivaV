@@ -5,14 +5,17 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
-        const { name, description } = req.body;
+        //borrar el userId cuando se implemente el login
+        const { name, description, userId } = req.body;
         console.log(req.body);
         if (!name) return res.status(400).json({ message: "Name is required" });
 
         const category = new Category({
             name,
             description,
-            //user: req.user,
+          //cuando se haga el login se debe reemplazar el user por la linea que esta comentada abajo  
+            userId: userId
+          //  user: req.user,
         });
 
         await category.save();
@@ -23,6 +26,5 @@ router.post("/", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
-
 
 export default router;
