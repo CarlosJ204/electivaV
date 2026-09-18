@@ -13,9 +13,9 @@ router.post("/", async (req, res) => {
         const category = new Category({
             name,
             description,
-          //cuando se haga el login se debe reemplazar el user por la linea que esta comentada abajo  
+            //cuando se haga el login se debe reemplazar el user por la linea que esta comentada abajo  
             userId: userId
-          //  user: req.user,
+            //  user: req.user,
         });
 
         await category.save();
@@ -26,5 +26,23 @@ router.post("/", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
+router.get("/", async (req, res) => {
+    try {
+        const { userId } = req.body
+        const categories = await Category.find({
+            userId: userId,
+        })
+        res.status(200).json(categories);
+
+    } catch {
+        console.log(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+
+})
 
 export default router;

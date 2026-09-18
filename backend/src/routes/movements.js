@@ -71,5 +71,43 @@ router.get("/get-movements-asc/:userId", async (req, res) => {
 
 });
 
+//endpoint para filtrar por rango de fechas y categorias
+router.get("/get-movements-date-category", async (req, res) => {
+    try {
+
+        const { userId, categoryId, minDate, maxDate } = req.body
+
+        const minTimestamp = new Date(minDate).getTime();
+        const maxTimestamp = new Date(maxDate).getTime();
+
+        if (isNaN(minTimestamp) || isNaN(maxTimestamp)) {
+            return res.status(400).json({
+                message: "Invalid date format"
+            });
+        }
+        const filters = {
+            userId,
+            date: {
+                $gte: minTimestamp,
+                $lte: maxTimestamp
+            }
+        };
+
+        if (categoryId) {
+            filters.categoryId = categoryId;
+        }
+
+        const movements = await Movement.find(filters)
+            .sort({ date: -1 });
+
+        res.status(200).json(movements);
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
 
 export default router;
