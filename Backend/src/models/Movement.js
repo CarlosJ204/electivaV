@@ -25,7 +25,7 @@ const movementSchema = new mongoose.Schema({
     },
     userId: {
         type: String,
-        required: true,
+        required: false,
     },
     createdAt: {
         type: Number,
