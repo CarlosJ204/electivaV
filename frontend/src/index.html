@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finova - Frontend Dev</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 15px; }
+        button:hover { background: #0056b3; }
+        #resultado { margin-top: 20px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Prueba de Conexión Finova</h2>
+        <p>Haz clic en el botón para conectar con el Backend.</p>
+        <button onclick="probarBackend()">Probar Backend</button>
+        <div id="resultado">Esperando respuesta...</div>
+    </div>
+
+    <script>
+        async function probarBackend() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerText = "Cargando...";
+            resultado.style.color = "orange";
+            
+            try {
+                // Reemplaza "/" con una ruta real de tu backend si tienes una, ej: "/api/health"
+                const response = await fetch('https://dev-finova.apolobyte.online/'); 
+                
+                if (response.ok) {
+                    resultado.innerText = "¡Conexión Exitosa con el Backend!";
+                    resultado.style.color = "green";
+                } else {
+                    resultado.innerText = `Respuesta del servidor: Error ${response.status}`;
+                    resultado.style.color = "red";
+                }
+            } catch (error) {
+                resultado.innerText = "Error de conexión (Revisa CORS o si el backend está caído)";
+                resultado.style.color = "red";
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

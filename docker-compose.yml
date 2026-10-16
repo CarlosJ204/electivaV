@@ -1,0 +1,36 @@
+services:
+  frontend-ci:
+    container_name: finova-frontend
+    build:
+      context: ./frontend
+    ports:
+      - "8090:80" 
+    depends_on:
+      - backend-ci
+    networks:
+      - internal
+    restart: unless-stopped
+
+  backend-ci:
+    container_name: e5-finova-backend
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports: 
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - API_KEY=${API_KEY}
+      - MONGODB_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${PORT}
+    networks:
+      - internal
+    restart: unless-stopped
+
+networks:
+  internal:
+    driver: bridge
