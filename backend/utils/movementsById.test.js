@@ -10,62 +10,50 @@ jest.unstable_mockModule("../modules/Movement.js", () => ({
     }
 }));
 
-const { default: movementRouter } = await import("../routes/movements.js");
+const { default: movementRouter } = await import("../src/routes/movements.js");
+
 
 const app = express();
 
 app.use(express.json());
 
-// Conectamos las rutas
 app.use("/", movementRouter);
 
 
-describe("GET /get-movements-date-category", () => {
+describe("GET /get-movements-desc/:userId", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-
-    test("should return movements filtered by date range and category", async () => {
+    test("should return all the movements associated to the userId", async () => {
 
         // ARRANGE
 
         const userId = "6aac6985d675bf7022bb59b6";
-        const categoryId = "6aab4f81c02e5686bb726ee4";
-
-        const minDate = "2026-09-01";
-        const maxDate = "2026-09-30";
-
-        const minTimestamp =
-            new Date(minDate).getTime();
-
-        const maxTimestamp =
-            new Date(maxDate).getTime();
-
 
         const movimientosMock = [
             {
-                _id: "1",
+                _id: "3",
                 type: "gasto",
-                amount: 30000,
                 userId: userId,
-                categoryId: categoryId,
-                date: 1789612084827
+                amount: 30000,
+                createdAt: 1789612598374
             },
             {
                 _id: "2",
-                type: "gasto",
-                amount: 25000,
+                type: "ingreso",
                 userId: userId,
-                categoryId: categoryId,
-                date: 1789500000000
+                amount: 50000,
+                createdAt: 1789526198374
             }
         ];
+
 
         const sortMock = jest
             .fn()
             .mockResolvedValue(movimientosMock);
+
 
         mockFind.mockReturnValue({
             sort: sortMock
@@ -74,13 +62,7 @@ describe("GET /get-movements-date-category", () => {
         // ACT
 
         const response = await request(app)
-            .get("/get-movements-date-category")
-            .send({
-                userId,
-                categoryId,
-                minDate,
-                maxDate
-            });
+            .get(`/get-movements-desc/${userId}`);
 
         // ASSERT
 
@@ -91,22 +73,12 @@ describe("GET /get-movements-date-category", () => {
         );
 
         expect(mockFind).toHaveBeenCalledWith({
-            userId: userId,
-
-            date: {
-                $gte: minTimestamp,
-                $lte: maxTimestamp
-            },
-
-            categoryId: categoryId
+            userId: userId
         });
 
-
-        // Verificamos el orden
         expect(sortMock).toHaveBeenCalledWith({
-            date: -1
+            createdAt: -1
         });
-
     }
     );
 
