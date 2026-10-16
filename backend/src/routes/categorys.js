@@ -7,7 +7,7 @@ router.post("/", async (req, res) => {
     try {
         //borrar el userId cuando se implemente el login
         const { name, description, userId } = req.body;
-        console.log(req.body);
+
         if (!name) return res.status(400).json({ message: "Name is required" });
 
         const category = new Category({

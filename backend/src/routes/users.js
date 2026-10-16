@@ -1,5 +1,5 @@
 import express from "express"
-import User from "../modules/User.js"
+import User from "../models/User.js"
 import Joi from "joi";
 import passwordComplexity from 'joi-password-complexity';
 
