@@ -17,3 +17,11 @@ yarn-error.*
 # logs
 logs/
 *.log
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Docker Compose
+/docker-compose.yml
