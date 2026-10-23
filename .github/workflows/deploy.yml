@@ -1,24 +1,28 @@
+
 on:
   push:
     branches:
-      - main
+      - dev_ci_cd
   workflow_dispatch:
+
 jobs:
   run_pull:
     name: run pull
     runs-on: ubuntu-latest
+
     steps:
-      - name: executing remote ssh commands using ssh
+      - name: Ejecutar comandos SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
+            set -e
             cd /root/projects/ElectivaVDiurno/Equipo5/electivaV
-            git fetch
-            git checkout ${{ secrets.MAIN_BRANCH}}
-            git pull ${{ secrets.MAIN_BRANCH}}
-            
+            git fetch origin
+            git checkout ${{ secrets.DEV_CI_CD }}
+            git pull origin ${{ secrets.DEV_CI_CD }}
+            git pull --ff-only origin ${{ secrets.DEV_CI_CD }}
+           

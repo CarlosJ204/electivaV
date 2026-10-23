@@ -3,45 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finova - Frontend Dev</title>
+    <title>Finova - Gestión Financiera</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 15px; }
-        button:hover { background: #0056b3; }
-        #resultado { margin-top: 20px; font-weight: bold; color: #333; }
+        :root {
+            --bg-gray: #828282;
+            --primary-blue: #0A11B8;
+            --green-bg: #82D982;
+            --red-bg: #E87474;
+            --card-white: #E0E0E0;
+            --text-dark: #1A1A1A;
+            --input-bg: #D1D1D1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+
+        body {
+            background-color: #121212; display: flex; justify-content: center;
+            align-items: center; min-height: 100vh; color: #fff;
+        }
+
+        .mobile-container {
+            width: 100%; max-width: 412px; height: 732px; background-color: var(--bg-gray);
+            border: 8px solid #333; border-radius: 40px; overflow: hidden; position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+        }
+
+        .app-header {
+            background-color: var(--primary-blue); height: 55px; display: flex;
+            align-items: center; justify-content: space-between; padding: 0 15px;
+            font-size: 18px; font-weight: bold; position: relative;
+        }
+
+        .app-header i { cursor: pointer; }
+        .app-header-left { display: flex; align-items: center; gap: 15px; }
+
+        .screen { display: none; flex: 1; padding: 25px 20px; overflow-y: auto; color: var(--text-dark); }
+        .screen.active { display: flex; flex-direction: column; }
+
+        .login-form { display: flex; flex-direction: column; gap: 30px; margin-top: 30px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; }
+        .input-label { display: flex; align-items: center; gap: 12px; font-size: 16px; color: #333; font-weight: bold; }
+        .input-label i { color: var(--primary-blue); }
+        
+        .form-input {
+            width: 100%; height: 45px; background-color: var(--input-bg); border: none;
+            padding: 0 15px; font-size: 15px; border-radius: 4px;
+        }
+
+        .btn-blue {
+            background-color: var(--primary-blue); color: white; border: none; height: 40px;
+            border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            text-align: center; display: flex; align-items: center; justify-content: center;
+        }
+
+        .auth-link {
+            text-align: center; font-size: 14px; color: #333; margin-top: -10px; font-weight: bold;
+        }
+        .auth-link a { color: var(--primary-blue); text-decoration: none; margin-left: 5px; }
+
+        .balance-card { background-color: var(--card-white); border-radius: 4px; padding: 15px; margin-bottom: 25px; }
+        .balance-title { font-size: 14px; color: #333; margin-bottom: 5px; }
+        .balance-amount { font-size: 32px; font-weight: bold; }
+
+        .summary-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .pennant {
+            color: #333; padding: 12px; text-align: center; font-weight: bold; position: relative;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 50% 100%, 0% 80%); height: 110px; display: flex;
+            flex-direction: column; justify-content: flex-start; gap: 8px;
+        }
+        .pennant.ingresos { background-color: var(--green-bg); }
+        .pennant.egresos { background-color: var(--red-bg); }
+        .pennant-title { font-size: 14px; }
+        .pennant-value { font-size: 16px; }
+
+        .action-link {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            background-color: var(--primary-blue); color: white; height: 45px; border-radius: 4px;
+            text-decoration: none; font-weight: bold; margin-top: auto; margin-bottom: 20px; border: none; cursor: pointer;
+        }
+
+        .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .type-btn {
+            border: none; height: 40px; font-weight: bold; font-size: 15px; border-radius: 12px;
+            cursor: pointer; color: #333; opacity: 0.5; transition: opacity 0.3s;
+        }
+        .type-btn.ingreso { background-color: var(--green-bg); }
+        .type-btn.egreso { background-color: var(--red-bg); }
+        .type-btn.active { opacity: 1; box-shadow: 0 0 0 3px var(--primary-blue); }
+
+        .input-row {
+            display: flex; align-items: center; background-color: var(--card-white); border-radius: 6px;
+            height: 40px; margin-bottom: 15px; padding: 0 12px; gap: 12px;
+        }
+        .input-row i { color: #333; width: 20px; }
+        .input-row input, .input-row select {
+            flex: 1; background: transparent; border: none; font-size: 14px; color: var(--text-dark);
+            height: 100%; outline: none;
+        }
+
+        .date-selects { display: flex; gap: 5px; flex: 1; }
+        .date-selects select { background: transparent; border: none; font-size: 14px; color: var(--text-dark); }
+
+        .history-list { display: flex; flex-direction: column; gap: 12px; }
+        .history-item {
+            background-color: var(--card-white); padding: 12px 15px; border-radius: 4px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .item-details { display: flex; flex-direction: column; gap: 4px; }
+        .item-meta { font-size: 12px; color: #555; }
+        .item-title { font-size: 15px; font-weight: bold; color: var(--text-dark); }
+        .item-value { font-weight: bold; font-size: 15px; }
+        .item-value.positive { color: #128012; }
+        .item-value.negative { color: #C02020; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Prueba de Conexión Finova</h2>
-        <p>Haz clic en el botón para conectar con el Backend.</p>
-        <button onclick="probarBackend()">Probar Backend</button>
-        <div id="resultado">Esperando respuesta...</div>
+
+    <div class="mobile-container">
+        
+        <!-- PANTALLA 1: Iniciar sesion -->
+        <div id="header-login" class="app-header">
+            <div></div>
+            <span>Iniciar sesion</span>
+            <i data-lucide="settings"></i>
+        </div>
+        <div id="screen-login" class="screen active">
+            <div class="login-form">
+                <div class="input-group">
+                    <div class="input-label"><i data-lucide="mail"></i><span>Correo electrónico</span></div>
+                    <input type="email" id="login-username" class="form-input" placeholder="Ingresa tu correo">
+                </div>
+                <div class="input-group">
+                    <div class="input-label"><i data-lucide="key-round"></i><span>Contraseña</span></div>
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••">
+                </div>
+                <button onclick="login()" class="btn-blue">Ingresar</button>
+                <div class="auth-link">¿No tienes cuenta?<a href="#" onclick="showScreen('register-user')">Regístrate</a></div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 1.5: Registrar Nuevo Usuario -->
+        <div id="header-register-user" class="app-header" style="display: none;">
+            <div class="app-header-left">
+                <i data-lucide="arrow-left" onclick="showScreen('login')"></i>
+                <span>Crear Cuenta</span>
+            </div>
+            <i data-lucide="settings"></i>
+        </div>
+        <div id="screen-register-user" class="screen">
+            <div class="login-form" style="margin-top: 10px;">
+                <div class="input-group">
+                    <div class="input-label"><i data-lucide="user"></i><span>Nombre de usuario</span></div>
+                    <input type="text" id="reg-username" class="form-input" placeholder="Mínimo 3 letras">
+                </div>
+                <div class="input-group">
+                    <div class="input-label"><i data-lucide="mail"></i><span>Correo electrónico</span></div>
+                    <input type="email" id="reg-email" class="form-input" placeholder="ejemplo@correo.com">
+                </div>
+                <div class="input-group">
+                    <div class="input-label"><i data-lucide="key-round"></i><span>Contraseña</span></div>
+                    <input type="password" id="reg-password" class="form-input" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button onclick="registerAccount()" class="btn-blue">Registrarme</button>
+                <div class="auth-link">¿Ya tienes cuenta?<a href="#" onclick="showScreen('login')">Ingresa</a></div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: Panel Principal -->
+        <div id="header-main" class="app-header" style="display: none;">
+            <div class="app-header-left">
+                <i data-lucide="arrow-left" onclick="showScreen('login')"></i>
+                <span>Panel Principal</span>
+            </div>
+            <i data-lucide="settings"></i>
+        </div>
+        <div id="screen-main" class="screen">
+            <div class="balance-card">
+                <div class="balance-title">Saldo disponible</div>
+                <div class="balance-amount" id="main-balance">0</div>
+            </div>
+            <div class="summary-container">
+                <div class="pennant ingresos"><span class="pennant-title">Ingresos</span><span class="pennant-value" id="main-income">0</span></div>
+                <div class="pennant egresos"><span class="pennant-title">Egresos</span><span class="pennant-value" id="main-expenses">0</span></div>
+            </div>
+            <button onclick="showScreen('register')" class="action-link"><i data-lucide="circle-plus"></i><span>Registrar movimiento</span></button>
+            <button onclick="loadHistory()" class="btn-blue" style="margin-top: 0;"><i data-lucide="history"></i> Ver historial</button>
+        </div>
+
+        <!-- PANTALLA 3: Registrar Movimiento -->
+        <div id="header-register" class="app-header" style="display: none;">
+            <div class="app-header-left"><i data-lucide="arrow-left" onclick="showScreen('main')"></i><span>Registrar movimiento</span></div>
+            <i data-lucide="settings"></i>
+        </div>
+        <div id="screen-register" class="screen">
+            <div class="type-selector">
+                <button type="button" id="btn-type-ingreso" class="type-btn ingreso active" onclick="setMovementType('ingreso')">Ingresos</button>
+                <button type="button" id="btn-type-egreso" class="type-btn egreso" onclick="setMovementType('egreso')">Egresos</button>
+            </div>
+            <div class="input-row"><i data-lucide="dollar-sign"></i><input type="number" id="mov-amount" placeholder="Monto"></div>
+            <div class="input-row"><i data-lucide="calendar"></i>
+                <div class="date-selects">
+                    <select id="mov-day"><option value="15">15</option><option value="14">14</option><option value="12">12</option></select>
+                    <select id="mov-month"><option value="Ago">Ago</option><option value="Sep">Sep</option><option value="Oct">Oct</option></select>
+                    <select id="mov-year"><option value="2026">2026</option><option value="2027">2027</option></select>
+                </div>
+            </div>
+            <div class="input-row"><i data-lucide="bookmark"></i><select id="mov-category"><option value="">Categoría</option></select></div>
+            <div class="input-row"><i data-lucide="smartphone"></i><input type="text" id="mov-desc" placeholder="Descripción"></div>
+            <button onclick="submitMovement()" class="btn-blue" style="margin-top: 30px;">Registrar</button>
+        </div>
+
+        <!-- PANTALLA 4: Historial de Movimientos -->
+        <div id="header-history" class="app-header" style="display: none;">
+            <div class="app-header-left"><i data-lucide="arrow-left" onclick="showScreen('main')"></i><span>Historial de Movimientos</span></div>
+            <i data-lucide="settings"></i>
+        </div>
+        <div id="screen-history" class="screen">
+            <div class="history-list" id="history-items"></div>
+        </div>
+
     </div>
 
     <script>
-        async function probarBackend() {
-            const resultado = document.getElementById('resultado');
-            resultado.innerText = "Cargando...";
-            resultado.style.color = "orange";
-            
+        lucide.createIcons();
+        const API_URL = "/api";
+        let userToken = "";
+        let currentType = "ingreso";
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.app-header').forEach(h => h.style.display = 'none');
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            document.getElementById(`header-${screenId}`).style.display = 'flex';
+        }
+
+        function setMovementType(type) {
+            currentType = type;
+            document.getElementById('btn-type-ingreso').classList.toggle('active', type === 'ingreso');
+            document.getElementById('btn-type-egreso').classList.toggle('active', type === 'egreso');
+        }
+
+        // --- AUTENTICACIÓN ---
+
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            if(!username || !password) { alert("Por favor completa los campos"); return; }
+
             try {
-                // Reemplaza "/" con una ruta real de tu backend si tienes una, ej: "/api/health"
-                const response = await fetch('https://dev-finova.apolobyte.online/'); 
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: username, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    userToken = data.token;
+                    showScreen('main');
+                    loadDashboard();
+                    loadCategories();
+                } else { alert(data.message || "Usuario o contraseña inválidos"); }
+            } catch (err) {
+                console.error(err);
+                alert("Usando modo de prueba local (Backend desconectado)");
+                showScreen('main');
+                mockDashboard();
+            }
+        }
+
+        // NUEVO: Función para registrar usuario en la base de datos
+        async function registerAccount() {
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            if(!username || !email || !password) {
+                alert("Por favor completa todos los campos");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
                 
                 if (response.ok) {
-                    resultado.innerText = "¡Conexión Exitosa con el Backend!";
-                    resultado.style.color = "green";
+                    alert("¡Cuenta creada con éxito!");
+                    // Tu backend ya devuelve el token al registrarse, así que iniciamos sesión directamente:
+                    userToken = data.token; 
+                    showScreen('main');
+                    loadDashboard();
+                    loadCategories();
                 } else {
-                    resultado.innerText = `Respuesta del servidor: Error ${response.status}`;
-                    resultado.style.color = "red";
+                    // Muestra el error exacto que tu backend mande (ej: "Email already exists")
+                    alert(data.message || "Error al crear la cuenta");
                 }
-            } catch (error) {
-                resultado.innerText = "Error de conexión (Revisa CORS o si el backend está caído)";
-                resultado.style.color = "red";
-                console.error(error);
+            } catch (err) {
+                console.error("Error al registrar:", err);
+                alert("No se pudo conectar con el servidor para registrarte.");
             }
+        }
+
+        // --- MÓDULO DE MOVIMIENTOS ---
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(`${API_URL}/movement/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    document.getElementById('main-balance').innerText = formatCurrency(data.balance);
+                    document.getElementById('main-income').innerText = formatCurrency(data.income);
+                    document.getElementById('main-expenses').innerText = formatCurrency(data.expenses);
+                }
+            } catch(e) { mockDashboard(); }
+        }
+
+        function mockDashboard() {
+            document.getElementById('main-balance').innerText = "1'200.000";
+            document.getElementById('main-income').innerText = "1'500.000";
+            document.getElementById('main-expenses').innerText = "300.000";
+        }
+
+        function formatCurrency(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+
+        async function loadCategories() {
+            const select = document.getElementById('mov-category');
+            try {
+                const res = await fetch(`${API_URL}/category`, { headers: { 'Authorization': `Bearer ${userToken}` }});
+                const data = await res.json();
+                if(res.ok) {
+                    select.innerHTML = '<option value="">Categoría</option>';
+                    data.forEach(cat => { select.innerHTML += `<option value="${cat._id}">${cat.name}</option>`; });
+                }
+            } catch(e) {
+                select.innerHTML = `<option value="">Categoría</option><option value="Arriendo">Arriendo</option>`;
+            }
+        }
+
+        async function submitMovement() {
+            const amount = document.getElementById('mov-amount').value;
+            const day = document.getElementById('mov-day').value;
+            const month = document.getElementById('mov-month').value;
+            const year = document.getElementById('mov-year').value;
+            const category = document.getElementById('mov-category').value;
+            const description = document.getElementById('mov-desc').value;
+
+            if(!amount || !category || !description) { alert("Completa todos los campos"); return; }
+
+            const movementData = {
+                type: currentType, amount: parseFloat(amount),
+                date: `${day} ${month} - ${year}`, category, description
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/movement`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                    body: JSON.stringify(movementData)
+                });
+                if(res.ok) { alert("Movimiento registrado con éxito"); showScreen('main'); loadDashboard(); }
+            } catch (err) { alert("Simulado con éxito (local)"); showScreen('main'); }
+        }
+
+        async function loadHistory() {
+            showScreen('history');
+            const list = document.getElementById('history-items');
+            list.innerHTML = "Cargando...";
+            try {
+                const res = await fetch(`${API_URL}/movement`, { headers: { 'Authorization': `Bearer ${userToken}` }});
+                const data = await res.json();
+                if(res.ok && data.length > 0) {
+                    list.innerHTML = "";
+                    data.forEach(item => {
+                        const isPos = item.type === 'ingreso';
+                        list.innerHTML += `<div class="history-item">
+                                <div class="item-details"><span class="item-meta">${item.date}</span><span class="item-title">${item.description}</span></div>
+                                <span class="item-value ${isPos ? 'positive' : 'negative'}">${isPos ? '+' : '-'}${formatCurrency(item.amount)}</span>
+                            </div>`;
+                    });
+                } else if (res.ok && data.length === 0) { list.innerHTML = "<div style='text-align:center; padding:20px'>No hay movimientos</div>"; }
+            } catch(e) { list.innerHTML = "<div style='text-align:center; padding:20px'>Error simulado</div>"; }
         }
     </script>
 </body>
