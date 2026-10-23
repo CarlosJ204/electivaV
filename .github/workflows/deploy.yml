@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Ejecutar comandos SSH
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
