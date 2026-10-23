@@ -19,10 +19,37 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            # Si falla algún comando, salir inmediatamente 
             set -e
+           
+            # Cambiar al directorio del proyecto y actualizar el repositorio
             cd /root/projects/ElectivaVDiurno/Equipo5/electivaV
             git fetch origin
             git checkout ${{ secrets.DEV_CI_CD }}
             git pull origin ${{ secrets.DEV_CI_CD }}
             git pull --ff-only origin ${{ secrets.DEV_CI_CD }}
+           
+            # Verificar que el secreto tenga contenido
+            if [ -z "$ENV_FILE" ]; then
+              echo "ERROR: ENV_FILE está vacío"
+              exit 1
+            fi
+
+            # Restringir permisos de archivos nuevos
+            umask 077
+
+            # Respaldar el .env anterior
+            if [ -f .env ]; then
+              cp -p .env .env.backup
+            fi
+
+            # Generar un archivo temporal
+            printf '%s\n' "$ENV_FILE" > .env.tmp
+            chmod 600 .env.tmp
+
+            # Reemplazar el .env actual
+            mv -f .env.tmp .env
+
+            echo "Proyecto actualizado"
+            echo "Archivo .env actualizado correctamente"
            
