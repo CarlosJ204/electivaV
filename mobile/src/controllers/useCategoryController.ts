@@ -1,20 +1,26 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Category } from '../types/Category';
 import { CategoryModel } from '../models/CategoryModel';
+import { useCurrentUserId } from './useCurrentUserId';
 
 export const useCategoryController = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: Esto se reemplazará por el ID real cuando se implemente autenticación
-  const currentUserId = 'mock-user-id';
+  // uid del usuario autenticado
+  const currentUserId = useCurrentUserId();
 
   const categoryModel = useMemo(() => new CategoryModel(), []);
 
   // Suscripción en tiempo real: cualquier pantalla que use este hook
   // (Categorías, Movimientos) recibe las categorías nuevas al instante.
   useEffect(() => {
+    if (!currentUserId) {
+      setCategories([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     const unsubscribe = categoryModel.subscribeToCategories(
       currentUserId,
@@ -33,6 +39,7 @@ export const useCategoryController = () => {
 
   // Recarga manual (se mantiene por compatibilidad)
   const loadCategories = async () => {
+    if (!currentUserId) return;
     try {
       setIsLoading(true);
       setError(null);
@@ -47,6 +54,10 @@ export const useCategoryController = () => {
 
   const handleAddCategory = async (name: string, description: string) => {
     if (!name) return;
+    if (!currentUserId) {
+      setError('Debes iniciar sesión para crear categorías');
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);

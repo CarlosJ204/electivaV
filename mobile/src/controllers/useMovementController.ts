@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Movement } from '../types/Movement';
 import { MovementModel } from '../models/MovementModel';
+import { useCurrentUserId } from './useCurrentUserId';
 
 export const useMovementController = () => {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: Esto se reemplazará por el ID real cuando se implemente autenticación
-  const currentUserId = 'mock-user-id';
+  // uid del usuario autenticado
+  const currentUserId = useCurrentUserId();
 
-  const movementModel = new MovementModel();
+  const movementModel = useMemo(() => new MovementModel(), []);
 
-  useEffect(() => {
-    loadMovements();
-  }, []);
-
-  const loadMovements = async () => {
+  const loadMovements = useCallback(async () => {
+    if (!currentUserId) {
+      setMovements([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
@@ -27,9 +29,17 @@ export const useMovementController = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [movementModel, currentUserId]);
+
+  useEffect(() => {
+    loadMovements();
+  }, [loadMovements]);
 
   const handleAddMovement = async (movementData: Omit<Movement, 'id' | 'createdAt' | 'userId'>) => {
+    if (!currentUserId) {
+      setError('Debes iniciar sesión para crear movimientos');
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
