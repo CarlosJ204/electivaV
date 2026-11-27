@@ -6,15 +6,6 @@ import { useMovementController } from '../controllers/useMovementController';
 import { useCategoryController } from '../controllers/useCategoryController';
 import { theme } from '../theme/theme';
 
-// <-- 2. Creamos tus categorías predefinidas (RF05)
-const categoriasPredefinidas = [
-  { id: 'pre-1', name: 'Alimentación' },
-  { id: 'pre-2', name: 'Transporte' },
-  { id: 'pre-3', name: 'Vivienda' },
-  { id: 'pre-4', name: 'Servicios' },
-  { id: 'pre-5', name: 'Entretenimiento' },
-];
-
 export const MovementScreen = () => {
   const { movements, isLoading, error, handleAddMovement } = useMovementController();
   const { categories, isLoading: isLoadingCategories } = useCategoryController();
@@ -26,8 +17,8 @@ export const MovementScreen = () => {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
 
-  // <-- 3. Unimos tus categorías predefinidas con las que vienen de la base de datos (RF06)
-  const todasLasCategorias = [...categoriasPredefinidas, ...categories];
+  // Solo se muestran las categorías guardadas en la base de datos (con id válido)
+  const categoriasDisponibles = categories.filter((cat) => !!cat.id);
 
   const formattedDate = date.toISOString().split('T')[0];
 
@@ -80,10 +71,13 @@ export const MovementScreen = () => {
         <Picker
           selectedValue={categoryId || ''}
           onValueChange={(itemValue) => setCategoryId(itemValue || null)}
+          mode="dropdown"
           style={styles.picker}
+          itemStyle={styles.pickerItem}
+          dropdownIconColor={theme.colors.textDark}
         >
           <Picker.Item label="Selecciona una categoría..." value="" color={theme.colors.textMuted} />
-          {todasLasCategorias.map((cat) => (
+          {categoriasDisponibles.map((cat) => (
             <Picker.Item 
               key={cat.id ?? cat.name} 
               label={cat.name} 
@@ -197,7 +191,7 @@ export const MovementScreen = () => {
             <Text style={styles.cardDate}>{new Date(item.date).toISOString().split('T')[0]}</Text>
           </View>
           <Text style={styles.cardCategory}>
-            {todasLasCategorias.find((c) => c.id === item.categoryId)?.name ?? item.categoryId}
+            {categoriasDisponibles.find((c) => c.id === item.categoryId)?.name ?? item.categoryId}
           </Text>
           {item.description ? <Text style={styles.cardDesc}>{item.description}</Text> : null}
         </View>
@@ -291,11 +285,20 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
     backgroundColor: theme.colors.background,
     marginBottom: theme.spacing.md,
-    overflow: 'hidden', 
+    // En iOS el Picker es una rueda (~216px); recortarlo lo deja casi invisible.
+    overflow: Platform.OS === 'ios' ? 'visible' : 'hidden',
   },
   picker: {
-    height: 55,
     width: '100%',
+    color: theme.colors.textDark,
+    // Android: altura mínima para que el texto no se corte. iOS usa su altura nativa.
+    ...(Platform.OS === 'android' ? { minHeight: 55 } : {}),
+  },
+  pickerItem: {
+    // Solo aplica en iOS: altura de la rueda y tamaño del texto de cada opción.
+    height: 150,
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.textDark,
   },
   card: {
     backgroundColor: theme.colors.cardBackground,
