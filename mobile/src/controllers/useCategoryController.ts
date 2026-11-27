@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Category } from '../types/Category';
 import { CategoryModel } from '../models/CategoryModel';
 
@@ -10,12 +10,28 @@ export const useCategoryController = () => {
   // TODO: Esto se reemplazará por el ID real cuando se implemente autenticación
   const currentUserId = 'mock-user-id';
 
-  const categoryModel = new CategoryModel();
+  const categoryModel = useMemo(() => new CategoryModel(), []);
 
+  // Suscripción en tiempo real: cualquier pantalla que use este hook
+  // (Categorías, Movimientos) recibe las categorías nuevas al instante.
   useEffect(() => {
-    loadCategories();
-  }, []);
+    setIsLoading(true);
+    const unsubscribe = categoryModel.subscribeToCategories(
+      currentUserId,
+      (data) => {
+        setCategories(data);
+        setError(null);
+        setIsLoading(false);
+      },
+      () => {
+        setError('No se pudieron cargar las categorías');
+        setIsLoading(false);
+      }
+    );
+    return unsubscribe;
+  }, [categoryModel, currentUserId]);
 
+  // Recarga manual (se mantiene por compatibilidad)
   const loadCategories = async () => {
     try {
       setIsLoading(true);
@@ -33,10 +49,12 @@ export const useCategoryController = () => {
     if (!name) return;
     try {
       setIsLoading(true);
+      setError(null);
+      // No hace falta recargar: el listener en tiempo real actualiza la lista.
       await categoryModel.addCategory({ name, description, userId: currentUserId });
-      await loadCategories(); // Recargar después de añadir
     } catch (err) {
       setError('Error al crear la categoría');
+    } finally {
       setIsLoading(false);
     }
   };
