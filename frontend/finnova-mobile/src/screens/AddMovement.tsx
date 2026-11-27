@@ -11,9 +11,24 @@ type Props = {
   goCategories: () => void;
 };
 
+function today() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 10);
+}
+
+function validDate(value: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  const normalized = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+  return normalized === value ? parsed.getTime() : null;
+}
+
 export default function AddMovement({ categories, userId, token, onSaved, goCategories }: Props) {
   const [type, setType] = useState<MovementType>('gasto');
   const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(today);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
@@ -23,15 +38,21 @@ export default function AddMovement({ categories, userId, token, onSaved, goCate
     if (saving) return;
     const normalized = amount.trim().replace(',', '.');
     const parsedAmount = Number(normalized);
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return setError('Escribe un monto válido.');
-    if (!categoryId) return setError('Selecciona una categoría.');
+    const timestamp = validDate(date.trim());
+    if (type !== 'ingreso' && type !== 'gasto') return setError('Selecciona ingreso o gasto.');
+    if (!/^\d+(?:\.\d{1,2})?$/.test(normalized) || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return setError('Escribe un monto mayor que cero, con máximo dos decimales.');
+    }
+    if (timestamp === null) return setError('Escribe una fecha real con formato AAAA-MM-DD.');
+    if (!categoryId || !categories.some((category) => category._id === categoryId)) return setError('Selecciona una categoría.');
     if (!userId?.trim()) return setError('Inicia sesión antes de guardar un movimiento.');
 
     setSaving(true);
     setError(null);
     try {
-      await addMovement({ type, amount: parsedAmount, date: Date.now(), categoryId, userId, ...(description.trim() ? { description: description.trim() } : {}) }, token);
+      await addMovement({ type, amount: parsedAmount, date: timestamp, categoryId, userId, ...(description.trim() ? { description: description.trim() } : {}) }, token);
       setAmount('');
+      setDate(today());
       setCategoryId(null);
       setDescription('');
       onSaved();
@@ -54,7 +75,8 @@ export default function AddMovement({ categories, userId, token, onSaved, goCate
       </View>
       <Text style={styles.label}>Monto</Text>
       <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="Ej: 25000" />
-      <Text style={styles.label}>Fecha: se registra automáticamente al guardar</Text>
+      <Text style={styles.label}>Fecha (AAAA-MM-DD)</Text>
+      <TextInput style={styles.input} value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" placeholder="AAAA-MM-DD" />
       <Text style={styles.label}>Categoría</Text>
       <View style={styles.wrap}>
         {categories.map((category) => (

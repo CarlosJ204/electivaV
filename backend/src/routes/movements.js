@@ -1,15 +1,14 @@
 import express from "express";
 import Movement from "../modules/Movement.js";
+import { validateMovement } from "../lib/validateMovement.js";
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
         const { type, amount, date, categoryId, description, userId } = req.body;
-        console.log(req.body);
-        if (!type) return res.status(400).json({ message: "Type is required" });
-        if (!amount) return res.status(400).json({ message: "Amount is required" });
-        if (!categoryId) return res.status(400).json({ message: "CategoryId is required" });
+        const validationError = validateMovement({ type, amount, date, categoryId, userId, description });
+        if (validationError) return res.status(400).json({ message: validationError });
 
         const movement = new Movement({
             type,
