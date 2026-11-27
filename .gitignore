@@ -4,6 +4,8 @@ node_modules/
 # env files
 .env
 .env*.local
+.env.backup
+.env.tmp
 
 # debug
 npm-debug.*
@@ -17,3 +19,11 @@ yarn-error.*
 # logs
 logs/
 *.log
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Docker Compose
+/docker-compose.yml

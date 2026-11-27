@@ -1,0 +1,58 @@
+
+on:
+  push:
+    branches:
+      - dev_ci_cd
+  workflow_dispatch:
+
+jobs:
+  run_pull:
+    name: run pull
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ejecutar comandos SSH
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: ENV_FILE
+          script: |
+            # Si falla algún comando, salir inmediatamente 
+            set -e
+           
+            # Cambiar al directorio del proyecto y actualizar el repositorio
+            cd /root/projects/ElectivaVDiurno/Equipo5/electivaV
+            git fetch origin
+            git checkout ${{ secrets.DEV_CI_CD }}
+            git pull origin ${{ secrets.DEV_CI_CD }}
+            git pull --ff-only origin ${{ secrets.DEV_CI_CD }}
+           
+            # Verificar que el secreto tenga contenido
+            if [ -z "$ENV_FILE" ]; then
+              echo "ERROR: ENV_FILE está vacío"
+              exit 1
+            fi
+
+            # Restringir permisos de archivos nuevos
+            umask 077
+
+            # Respaldar el .env anterior
+            if [ -f .env ]; then
+              cp -p .env .env.backup
+            fi
+
+            # Generar un archivo temporal
+            printf '%s\n' "$ENV_FILE" > .env.tmp
+            chmod 600 .env.tmp
+
+            # Reemplazar el .env actual
+            mv -f .env.tmp .env
+
+            echo "Proyecto actualizado"
+            echo "Archivo .env actualizado correctamente"
+           
